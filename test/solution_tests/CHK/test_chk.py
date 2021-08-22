@@ -1,13 +1,23 @@
 import pytest
 
 from solutions.CHK import checkout, Discount, Freebie
-from solutions.CHK.checkout_solution import _apply_discount, _apply_freebies
+from solutions.CHK.checkout_solution import _apply_discount, _apply_freebies, _apply_single_freebie
 
 
 def test_apply_discount():
     subtotal = 50
     remainder_qnt = 1
     assert _apply_discount(0, 3, Discount(2, 50)) == (subtotal, remainder_qnt)
+
+
+def test_apply_freebie():
+    order = {
+        'Y': 5,
+        'Z': 3
+    }
+    remainder_qnt = _apply_single_freebie(order, order['Y'], Freebie(2, 'Z', 2))
+    assert order['Z'] == 0
+    assert remainder_qnt == 1
 
 
 class TestCheckout:
@@ -40,3 +50,4 @@ class TestCheckout:
     ])
     def test_detects_freebies(self, order, expected):
         assert checkout(order) == expected
+

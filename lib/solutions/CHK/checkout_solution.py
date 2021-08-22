@@ -68,9 +68,9 @@ def checkout(skus: str) -> int:
 def _apply_freebies(order: Dict[str, int]) -> Dict[str, int]:
     parsed_order = order.copy()
     for sku, freebies in FREEBIES.items():
-        qnt_available = order[sku]
         if sku not in order:
             continue
+        qnt_available = order[sku]
         for details in freebies:
             qnt_available = _apply_single_freebie(parsed_order, qnt_available, details)
     return parsed_order
@@ -102,3 +102,4 @@ def _apply_discount(subtotal: int, qnt: int, discount: Discount) -> Tuple[int, i
         subtotal += sets * discount.price
         qnt %= discount.qnt_required
     return subtotal, qnt
+
