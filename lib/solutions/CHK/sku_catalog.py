@@ -2,11 +2,11 @@ from dataclasses import dataclass
 import re
 from typing import List, Dict, Tuple
 
-PRICE_IDX = 0
-SKU_IDX = 1
+SKU_IDX = 0
+PRICE_IDX = 1
 OFFERS_IDX = 2
 
-RE_FREEBIE = re.compile(r"(?P<qnt_required>\d+)(?P<sku_required>[A-Z]) get (?P<qnt_offered>(one|two|\d+)\s?)(?P<sku_offered>[A-Z])")
+RE_FREEBIE = re.compile(r"(?P<qnt_required>\d+)(?P<sku_required>[A-Z]) get (?P<qnt_offered>(one|two|\d+))\s?(?P<sku_offered>[A-Z])")
 RE_DISCOUNT = re.compile(r"(?P<qnt_required>\d+)(?P<sku_required>[A-Z]) for (?P<price>\d+)")
 
 
@@ -92,7 +92,7 @@ def _parse_freebies(
         m = RE_FREEBIE.search(new_offers, idx, endpos)
         if m is None:
             break
-        idx += m.span()
+        idx += m.span()[1]
 
         # Parse single freebie offer
         if sku != m.group('sku_required'):
@@ -129,7 +129,7 @@ def _parse_discounts(
         m = RE_DISCOUNT.search(new_offers, idx, endpos)
         if m is None:
             break
-        idx += m.span()
+        idx += m.span()[1]
 
         # Parse multi-buy offer
         if sku != m.group('sku_required'):
@@ -161,4 +161,5 @@ def _freebies_to_quantity(qnt_offered: str) -> int:
 
 
 PRICE_TABLE, FREEBIES, SPECIAL_OFFERS = load_catalog(CATALOG_SOURCE)
+
 
