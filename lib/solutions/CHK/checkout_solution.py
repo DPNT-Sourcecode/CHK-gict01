@@ -61,7 +61,7 @@ def _apply_group_buys(order: Dict[str, int]) -> Tuple[Dict[str, int], int]:
             continue
         for details in GROUPBUYS[sku]:
             # Since we need to favor the customer, we want to discount quantities starting from most expensive item
-            sorted_skus = _get_sorted_accepted_skus(details)
+            sorted_skus = _get_sorted_accepted_skus(details, order)
             qnt_available = sum([parsed_order[acpt] for acpt in sorted_skus])
             if details.qnt_required <= qnt_available:
                 qnt_to_discount = qnt_available - (qnt_available % details.qnt_required)
@@ -72,10 +72,12 @@ def _apply_group_buys(order: Dict[str, int]) -> Tuple[Dict[str, int], int]:
     return parsed_order, subtotal
 
 
-def _get_sorted_accepted_skus(groupbuy: GroupBuy) -> List[str]:
+def _get_sorted_accepted_skus(groupbuy: GroupBuy, order: Dict[str, int]) -> List[str]:
     """Sorts accepted SKU pertaining to a group-buy offer by price in descending order"""
     price_ordered_skus = []
     for acpt in groupbuy.skus_accepted:
+        if acpt not in order:
+            continue
         inserted = False
         for idx, other in enumerate(price_ordered_skus):
             if PRICE_TABLE[acpt] > PRICE_TABLE[other]:
@@ -103,5 +105,6 @@ def _apply_discount(subtotal: int, qnt: int, discount: Discount) -> Tuple[int, i
         subtotal += sets * discount.price
         qnt %= discount.qnt_required
     return subtotal, qnt
+
 
 

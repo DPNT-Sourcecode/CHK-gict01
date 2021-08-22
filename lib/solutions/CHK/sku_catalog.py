@@ -7,7 +7,7 @@ PRICE_IDX = 1
 OFFERS_IDX = 2
 
 RE_FREEBIE = re.compile(r"(?P<qnt_required>\d+)(?P<sku_required>[A-Z]) get (?P<qnt_offered>(one|two|\d+))\s?(?P<sku_offered>[A-Z])")
-RE_GROUPBUY = re.compile(r"buy any (?P<qnt_required>\d+) of (?P<skus_accepted>\([A-Z],)*[A-Z]\) for (?P<price>\d+)")
+RE_GROUPBUY = re.compile(r"buy any (?P<qnt_required>\d+) of \((?P<skus_accepted>([A-Z],)*[A-Z])\) for (?P<price>\d+)")
 RE_DISCOUNT = re.compile(r"(?P<qnt_required>\d+)(?P<sku_required>[A-Z]) for (?P<price>\d+)")
 
 
@@ -155,14 +155,13 @@ def _parse_groupbuys(
         sku: str,
         new_offers: str
 ) -> None:
-    breakpoint()
     for m in RE_GROUPBUY.finditer(new_offers, 0, len(new_offers)):
         # Parse group-buy offer
         if sku not in groupbuys:
             groupbuys[sku] = []
         new_groupbuy = GroupBuy(
             int(m.group('qnt_required')),
-            [item for item in m.group('skus_accepted')],
+            [item for item in m.group('skus_accepted').split(',')],
             int(m.group('price'))
         )
 
@@ -186,5 +185,6 @@ def _freebies_to_quantity(qnt_offered: str) -> int:
 
 
 PRICE_TABLE, FREEBIES, GROUPBUYS, SPECIAL_OFFERS = load_catalog(CATALOG_SOURCE)
+
 
 
