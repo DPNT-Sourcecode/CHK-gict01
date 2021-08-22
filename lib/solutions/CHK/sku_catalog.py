@@ -85,15 +85,7 @@ def _parse_freebies(
         sku: str,
         new_offers: str
 ) -> None:
-    endpos = len(new_offers)
-    idx = 0
-    # Process freebies
-    while idx < endpos:
-        m = RE_FREEBIE.search(new_offers, idx, endpos)
-        if m is None:
-            break
-        idx += m.span()[1]
-
+    for m in RE_FREEBIE.finditer(new_offers, 0, len(new_offers)):
         # Parse single freebie offer
         if sku != m.group('sku_required'):
             raise ValueError(f"Freebie offer for {m.group('sku_required')} specified in wrong SKU entry {sku}")
@@ -122,15 +114,7 @@ def _parse_discounts(
         sku: str,
         new_offers: str
 ) -> None:
-    endpos = len(new_offers)
-    idx = 0
-    # Process multi-buy discounts
-    while idx < endpos:
-        m = RE_DISCOUNT.search(new_offers, idx, endpos)
-        if m is None:
-            break
-        idx += m.span()[1]
-
+    for m in RE_DISCOUNT.finditer(new_offers, 0, len(new_offers)):
         # Parse multi-buy offer
         if sku != m.group('sku_required'):
             raise ValueError(f"Multi-buy offer for {m.group('sku_required')} specified in wrong SKU entry {sku}")
@@ -161,5 +145,6 @@ def _freebies_to_quantity(qnt_offered: str) -> int:
 
 
 PRICE_TABLE, FREEBIES, SPECIAL_OFFERS = load_catalog(CATALOG_SOURCE)
+
 
 
