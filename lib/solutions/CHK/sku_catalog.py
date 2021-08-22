@@ -76,7 +76,6 @@ def load_catalog(catalog: str) -> Tuple[Dict[str, int], Dict[str, List[Freebie]]
         price_list[sku] = price
         _parse_freebies(freebies, sku, tokens[OFFERS_IDX])
         _parse_discounts(discounts, sku, tokens[OFFERS_IDX])
-    breakpoint()
     return price_list, freebies, discounts
 
 
@@ -145,6 +144,7 @@ def _freebies_to_quantity(qnt_offered: str) -> int:
 
 
 PRICE_TABLE, FREEBIES, SPECIAL_OFFERS = load_catalog(CATALOG_SOURCE)
+
 
 
 
