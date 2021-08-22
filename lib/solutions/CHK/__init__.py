@@ -1,1 +1,2 @@
-from .checkout_solution import checkout
+from .checkout_solution import checkout, Discount, Freebie
+

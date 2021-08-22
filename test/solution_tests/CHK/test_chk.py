@@ -1,6 +1,13 @@
 import pytest
 
-from solutions.CHK import checkout
+from solutions.CHK import checkout, Discount, Freebie
+from solutions.CHK.checkout_solution import _apply_discount, _apply_freebies
+
+
+def test_apply_discount():
+    subtotal = 50
+    remainder_qnt = 1
+    assert _apply_discount(0, 3, Discount(2, 50)) == (subtotal, remainder_qnt)
 
 
 class TestCheckout:
@@ -26,3 +33,11 @@ class TestCheckout:
     ])
     def test_detects_promotions(self, order, expected):
         assert checkout(order) == expected
+
+    @pytest.mark.parametrize('order, expected', [
+        ("EEAA", 180),
+        ("EEEBB", 150),
+    ])
+    def test_detects_freebies(self, order, expected):
+        assert checkout(order) == expected
+
