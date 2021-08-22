@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 
 from .sku_catalog import PRICE_TABLE, FREEBIES, GROUPBUYS, SPECIAL_OFFERS, Freebie, Discount, GroupBuy
 
@@ -60,14 +60,31 @@ def _apply_group_buys(order: Dict[str, int]) -> Tuple[Dict[str, int], int]:
         if sku not in GROUPBUYS:
             continue
         for details in GROUPBUYS[sku]:
-            qnt_available = sum([parsed_order[acpt] for acpt in details.skus_accepted])
+            # Since we need to favor the customer, we want to discount quantities starting from most expensive item
+            sorted_skus = _get_sorted_accepted_skus(details)
+            qnt_available = sum([parsed_order[acpt] for acpt in sorted_skus])
             if details.qnt_required <= qnt_available:
                 qnt_to_discount = qnt_available - (qnt_available % details.qnt_required)
-                for acpt in details.skus_accepted:
+                for acpt in sorted_skus:
                     while qnt_to_discount > 0 and parsed_order[acpt] > 0:
                         parsed_order[acpt] -= 1
                         qnt_to_discount -= 1
     return parsed_order, subtotal
+
+
+def _get_sorted_accepted_skus(groupbuy: GroupBuy) -> List[str]:
+    """Sorts accepted SKU pertaining to a group-buy offer by price in descending order"""
+    price_ordered_skus = []
+    for acpt in groupbuy.skus_accepted:
+        inserted = False
+        for idx, other in enumerate(price_ordered_skus):
+            if PRICE_TABLE[acpt] > PRICE_TABLE[other]:
+                price_ordered_skus.insert(idx, acpt)
+                inserted = True
+                break
+        if not inserted:
+            price_ordered_skus.append(acpt)
+    return price_ordered_skus
 
 
 def _compute_total_with_discounts(order: Dict[str, int]) -> int:
@@ -86,4 +103,5 @@ def _apply_discount(subtotal: int, qnt: int, discount: Discount) -> Tuple[int, i
         subtotal += sets * discount.price
         qnt %= discount.qnt_required
     return subtotal, qnt
+
 

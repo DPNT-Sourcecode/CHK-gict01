@@ -42,6 +42,14 @@ class TestCheckout:
         assert checkout(order) == expected
 
     @pytest.mark.parametrize('order, expected', [
+        ("ST", 40),
+        ("XYZ", 45),
+        ('XZZYY', 82),
+    ])
+    def test_detects_group_buys(self, order, expected):
+        assert checkout(order) == expected
+
+    @pytest.mark.parametrize('order, expected', [
         ("EEAA", 180),
         ("EEEBB", 150),
         ('FFF', 20),
@@ -50,7 +58,8 @@ class TestCheckout:
         assert checkout(order) == expected
 
     @pytest.mark.parametrize('order, expected', [
-        ("EEAAAAABBB", 325),
+        ("EEAAAAABBBXYZSSS", 415),
     ])
-    def test_applies_freebies_and_discounts(self, order, expected):
+    def test_applies_all_offer_types(self, order, expected):
         assert checkout(order) == expected
+
