@@ -64,7 +64,9 @@ def _apply_group_buys(order: Dict[str, int]) -> Tuple[Dict[str, int], int]:
             sorted_skus = _get_sorted_accepted_skus(details, order)
             qnt_available = sum([parsed_order[acpt] for acpt in sorted_skus])
             if details.qnt_required <= qnt_available:
-                qnt_to_discount = qnt_available - (qnt_available % details.qnt_required)
+                sets = qnt_available // details.qnt_required
+                subtotal += sets * details.price
+                qnt_to_discount = sets * details.qnt_required
                 for acpt in sorted_skus:
                     while qnt_to_discount > 0 and parsed_order[acpt] > 0:
                         parsed_order[acpt] -= 1
@@ -105,6 +107,3 @@ def _apply_discount(subtotal: int, qnt: int, discount: Discount) -> Tuple[int, i
         subtotal += sets * discount.price
         qnt %= discount.qnt_required
     return subtotal, qnt
-
-
-

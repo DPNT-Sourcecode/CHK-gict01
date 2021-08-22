@@ -62,4 +62,3 @@ class TestCheckout:
     ])
     def test_applies_all_offer_types(self, order, expected):
         assert checkout(order) == expected
-
