@@ -4,6 +4,7 @@ from typing import Dict, Tuple
 
 @dataclass
 class Freebie:
+    sku_required: str
     qnt_required: int
     sku_offered: str
     qnt_offered: int
@@ -21,11 +22,15 @@ PRICE_TABLE = {
     'C': 20,
     'D': 15,
     'E': 40,
+    'F': 10,
 }
 
 FREEBIES = {
     'E': [
-        Freebie(2, 'B', 1)
+        Freebie('E', 2, 'B', 1)
+    ],
+    'F': [
+        Freebie('F', 2, 'F', 1)
     ]
 }
 
@@ -77,9 +82,13 @@ def _apply_freebies(order: Dict[str, int]) -> Dict[str, int]:
 
 
 def _apply_single_freebie(order: Dict[str, int], qnt: int, freebie: Freebie) -> int:
-    if freebie.qnt_required <= qnt and freebie.sku_offered in order:
-        sets = qnt // freebie.qnt_required
-        qnt %= freebie.qnt_required
+    if freebie.sku_required == freebie.sku_offered:
+        qnt_req = freebie.qnt_required + freebie.qnt_offered
+    else:
+        qnt_req = freebie.qnt_required
+    if qnt_req <= qnt and freebie.sku_offered in order:
+        sets = qnt // qnt_req
+        qnt %= qnt_req
         order[freebie.sku_offered] = max(0, order[freebie.sku_offered] - sets*freebie.qnt_offered)
     return qnt
 
@@ -100,5 +109,6 @@ def _apply_discount(subtotal: int, qnt: int, discount: Discount) -> Tuple[int, i
         subtotal += sets * discount.price
         qnt %= discount.qnt_required
     return subtotal, qnt
+
 
 

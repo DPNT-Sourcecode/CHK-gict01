@@ -1,7 +1,7 @@
 import pytest
 
 from solutions.CHK import checkout, Discount, Freebie
-from solutions.CHK.checkout_solution import _apply_discount, _apply_freebies, _apply_single_freebie
+from solutions.CHK.checkout_solution import _apply_discount, _apply_single_freebie
 
 
 def test_apply_discount():
@@ -47,6 +47,7 @@ class TestCheckout:
     @pytest.mark.parametrize('order, expected', [
         ("EEAA", 180),
         ("EEEBB", 150),
+        ('FFF', 20),
     ])
     def test_detects_freebies(self, order, expected):
         assert checkout(order) == expected
@@ -56,5 +57,6 @@ class TestCheckout:
     ])
     def test_applies_freebies_and_discounts(self, order, expected):
         assert checkout(order) == expected
+
 
 
