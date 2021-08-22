@@ -1,49 +1,49 @@
-from dataclasses import dataclass
 from typing import Dict, Tuple
 
+from .sku_catalog import PRICE_TABLE, FREEBIES, SPECIAL_OFFERS, Freebie, Discount
 
-@dataclass
-class Freebie:
-    sku_required: str
-    qnt_required: int
-    sku_offered: str
-    qnt_offered: int
-
-
-@dataclass
-class Discount:
-    qnt_required: int
-    price: int
-
-
-PRICE_TABLE = {
-    'A': 50,
-    'B': 30,
-    'C': 20,
-    'D': 15,
-    'E': 40,
-    'F': 10,
-}
-
-FREEBIES = {
-    'E': [
-        Freebie('E', 2, 'B', 1)
-    ],
-    'F': [
-        Freebie('F', 2, 'F', 1)
-    ]
-}
-
-# Ongoing special offers for price discounts, must be ordered by quantity required in decreasing order
-SPECIAL_OFFERS = {
-    'A': [
-        Discount(5, 200),
-        Discount(3, 130),
-    ],
-    'B': [
-        Discount(2, 45),
-    ],
-}
+# @dataclass
+# class Freebie:
+#     sku_required: str
+#     qnt_required: int
+#     sku_offered: str
+#     qnt_offered: int
+#
+#
+# @dataclass
+# class Discount:
+#     qnt_required: int
+#     price: int
+#
+#
+# PRICE_TABLE = {
+#     'A': 50,
+#     'B': 30,
+#     'C': 20,
+#     'D': 15,
+#     'E': 40,
+#     'F': 10,
+# }
+#
+# FREEBIES = {
+#     'E': [
+#         Freebie('E', 2, 'B', 1)
+#     ],
+#     'F': [
+#         Freebie('F', 2, 'F', 1)
+#     ]
+# }
+#
+# # Ongoing special offers for price discounts, must be ordered by quantity required in decreasing order
+# SPECIAL_OFFERS = {
+#     'A': [
+#         Discount(5, 200),
+#         Discount(3, 130),
+#     ],
+#     'B': [
+#         Discount(2, 45),
+#     ],
+# }
 
 
 # noinspection PyUnusedLocal
@@ -109,3 +109,4 @@ def _apply_discount(subtotal: int, qnt: int, discount: Discount) -> Tuple[int, i
         subtotal += sets * discount.price
         qnt %= discount.qnt_required
     return subtotal, qnt
+

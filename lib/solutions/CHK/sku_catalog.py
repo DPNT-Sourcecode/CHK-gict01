@@ -61,7 +61,7 @@ def load_catalog(catalog: str) -> Tuple[Dict[str, int], Dict[str, List[Freebie]]
     freebies = {}
     discounts = {}
 
-    for line in str.splitlines('\n'):
+    for line in catalog.splitlines():
         if not line or not line.startswith('|'):
             continue
         tokens = line[1:-1].split('|')
@@ -74,51 +74,82 @@ def load_catalog(catalog: str) -> Tuple[Dict[str, int], Dict[str, List[Freebie]]
         if price <= 0:
             raise ValueError(f"Incorrect price detected for {sku}:\n{line}")
         price_list[sku] = price
-        _parse_offers(freebies, discounts, sku, tokens[OFFERS_IDX])
+        _parse_freebies(freebies, sku, tokens[OFFERS_IDX])
+        _parse_discounts(discounts, sku, tokens[OFFERS_IDX])
+    breakpoint()
     return price_list, freebies, discounts
 
 
-def _parse_offers(
+def _parse_freebies(
         freebies: Dict[str, List[Freebie]],
-        discounts: Dict[str, List[Discount]],
         sku: str,
         new_offers: str
 ) -> None:
     endpos = len(new_offers)
-
-    # Process freebies
     idx = 0
+    # Process freebies
     while idx < endpos:
         m = RE_FREEBIE.search(new_offers, idx, endpos)
         if m is None:
             break
         idx += m.span()
+
+        # Parse single freebie offer
         if sku != m.group('sku_required'):
             raise ValueError(f"Freebie offer for {m.group('sku_required')} specified in wrong SKU entry {sku}")
         if sku not in freebies:
             freebies[sku] = []
-        freebies[sku].append(Freebie(
+        new_freebie = Freebie(
             m.group('sku_required'),
             int(m.group('qnt_required')),
             m.group('sku_offered'),
             _freebies_to_quantity(m.group('qnt_offered'))
-        ))
+        )
 
-    # Process multi-buy discounts
+        # Ensure new freebie offer is inserted by quantity required in descending order
+        inserted = False
+        for idx, discount in enumerate(freebies[sku]):
+            if new_freebie.qnt_required > discount.qnt_required:
+                freebies[sku].insert(idx, new_freebie)
+                inserted = True
+                break
+        if not inserted:
+            freebies[sku].append(new_freebie)
+
+
+def _parse_discounts(
+        discounts: Dict[str, List[Discount]],
+        sku: str,
+        new_offers: str
+) -> None:
+    endpos = len(new_offers)
     idx = 0
+    # Process multi-buy discounts
     while idx < endpos:
         m = RE_DISCOUNT.search(new_offers, idx, endpos)
         if m is None:
             break
         idx += m.span()
+
+        # Parse multi-buy offer
         if sku != m.group('sku_required'):
             raise ValueError(f"Multi-buy offer for {m.group('sku_required')} specified in wrong SKU entry {sku}")
         if sku not in discounts:
             discounts[sku] = []
-        discounts[sku].append(Discount(
+        new_discount = Discount(
             int(m.group('qnt_required')),
             int(m.group('price'))
-        ))
+        )
+
+        # Ensure new multi-buy offer is inserted by quantity required in descending order
+        inserted = False
+        for idx, discount in enumerate(discounts[sku]):
+            if new_discount.qnt_required > discount.qnt_required:
+                discounts[sku].insert(idx, new_discount)
+                inserted = True
+                break
+        if not inserted:
+            discounts[sku].append(new_discount)
 
 
 def _freebies_to_quantity(qnt_offered: str) -> int:
@@ -130,3 +161,4 @@ def _freebies_to_quantity(qnt_offered: str) -> int:
 
 
 PRICE_TABLE, FREEBIES, SPECIAL_OFFERS = load_catalog(CATALOG_SOURCE)
+
