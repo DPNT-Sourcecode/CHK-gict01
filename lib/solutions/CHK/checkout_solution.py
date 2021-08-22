@@ -87,11 +87,9 @@ def _apply_single_freebie(order: Dict[str, int], qnt: int, freebie: Freebie) -> 
 def _compute_total_with_discounts(order: Dict[str, int]) -> int:
     total = 0
     for item, qnt in order.items():
-        if item not in SPECIAL_OFFERS:
-            continue
-
-        for discount in SPECIAL_OFFERS[item]:
-            total, qnt = _apply_discount(total, qnt, discount)
+        if item in SPECIAL_OFFERS:
+            for discount in SPECIAL_OFFERS[item]:
+                total, qnt = _apply_discount(total, qnt, discount)
         total += qnt * PRICE_TABLE[item]
     return total
 
@@ -102,4 +100,5 @@ def _apply_discount(subtotal: int, qnt: int, discount: Discount) -> Tuple[int, i
         subtotal += sets * discount.price
         qnt %= discount.qnt_required
     return subtotal, qnt
+
 

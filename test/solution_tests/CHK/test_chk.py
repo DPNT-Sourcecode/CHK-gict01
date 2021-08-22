@@ -37,7 +37,7 @@ class TestCheckout:
         assert checkout(order) == expected
 
     @pytest.mark.parametrize('order, expected', [
-        ("AAAAAAA", 310),
+        ("AAAAAAAA", 330),
         ("BBBB", 90),
         ("DAABCAB", 210),
     ])
@@ -50,4 +50,11 @@ class TestCheckout:
     ])
     def test_detects_freebies(self, order, expected):
         assert checkout(order) == expected
+
+    @pytest.mark.parametrize('order, expected', [
+        ("EEAAAAABBB", 325),
+    ])
+    def test_applies_freebies_and_discounts(self, order, expected):
+        assert checkout(order) == expected
+
 
