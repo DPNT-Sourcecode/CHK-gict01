@@ -38,4 +38,3 @@ def checkout(skus: str) -> int:
             qnt %= SPECIAL_OFFERS[item][SO_QUANTITY]
         total += qnt * PRICE_TABLE[item]
     return total
-
