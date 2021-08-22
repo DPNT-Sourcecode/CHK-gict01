@@ -1,3 +1,6 @@
 # noinspection PyShadowingBuiltins,PyUnusedLocal
 def compute(x, y):
-    raise NotImplementedError()
+    if hasattr(x, '__add__') and hasattr(y, '__add__'):
+        return x + y
+    return None
+
