@@ -1,49 +1,6 @@
 from typing import Dict, Tuple
 
-from .sku_catalog import PRICE_TABLE, FREEBIES, SPECIAL_OFFERS, Freebie, Discount
-
-# @dataclass
-# class Freebie:
-#     sku_required: str
-#     qnt_required: int
-#     sku_offered: str
-#     qnt_offered: int
-#
-#
-# @dataclass
-# class Discount:
-#     qnt_required: int
-#     price: int
-#
-#
-# PRICE_TABLE = {
-#     'A': 50,
-#     'B': 30,
-#     'C': 20,
-#     'D': 15,
-#     'E': 40,
-#     'F': 10,
-# }
-#
-# FREEBIES = {
-#     'E': [
-#         Freebie('E', 2, 'B', 1)
-#     ],
-#     'F': [
-#         Freebie('F', 2, 'F', 1)
-#     ]
-# }
-#
-# # Ongoing special offers for price discounts, must be ordered by quantity required in decreasing order
-# SPECIAL_OFFERS = {
-#     'A': [
-#         Discount(5, 200),
-#         Discount(3, 130),
-#     ],
-#     'B': [
-#         Discount(2, 45),
-#     ],
-# }
+from .sku_catalog import PRICE_TABLE, FREEBIES, GROUPBUYS, SPECIAL_OFFERS, Freebie, Discount, GroupBuy
 
 
 # noinspection PyUnusedLocal
@@ -66,8 +23,11 @@ def checkout(skus: str) -> int:
     # Apply freebies
     order = _apply_freebies(order)
 
+    # Apply group-buy offers
+    order, subtotal = _apply_group_buys(order)
+
     # Apply discounts and compute order total
-    return _compute_total_with_discounts(order)
+    return subtotal + _compute_total_with_discounts(order)
 
 
 def _apply_freebies(order: Dict[str, int]) -> Dict[str, int]:
@@ -93,6 +53,23 @@ def _apply_single_freebie(order: Dict[str, int], qnt: int, freebie: Freebie) -> 
     return qnt
 
 
+def _apply_group_buys(order: Dict[str, int]) -> Tuple[Dict[str, int], int]:
+    parsed_order = order.copy()
+    subtotal = 0
+    for sku in order:
+        if sku not in GROUPBUYS:
+            continue
+        for details in GROUPBUYS[sku]:
+            qnt_available = sum([parsed_order[acpt] for acpt in details.skus_accepted])
+            if details.qnt_required <= qnt_available:
+                qnt_to_discount = qnt_available - (qnt_available % details.qnt_required)
+                for acpt in details.skus_accepted:
+                    while qnt_to_discount > 0 and parsed_order[acpt] > 0:
+                        parsed_order[acpt] -= 1
+                        qnt_to_discount -= 1
+    return parsed_order, subtotal
+
+
 def _compute_total_with_discounts(order: Dict[str, int]) -> int:
     total = 0
     for item, qnt in order.items():
@@ -109,3 +86,4 @@ def _apply_discount(subtotal: int, qnt: int, discount: Discount) -> Tuple[int, i
         subtotal += sets * discount.price
         qnt %= discount.qnt_required
     return subtotal, qnt
+

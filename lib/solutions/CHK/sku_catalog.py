@@ -7,38 +7,39 @@ PRICE_IDX = 1
 OFFERS_IDX = 2
 
 RE_FREEBIE = re.compile(r"(?P<qnt_required>\d+)(?P<sku_required>[A-Z]) get (?P<qnt_offered>(one|two|\d+))\s?(?P<sku_offered>[A-Z])")
+RE_GROUPBUY = re.compile(r"buy any (?P<qnt_required>\d+) of (?P<skus_accepted>\([A-Z],)*[A-Z]\) for (?P<price>\d+)")
 RE_DISCOUNT = re.compile(r"(?P<qnt_required>\d+)(?P<sku_required>[A-Z]) for (?P<price>\d+)")
 
 
 CATALOG_SOURCE = """
-+------+-------+------------------------+
-| A    | 50    | 3A for 130, 5A for 200 |
-| B    | 30    | 2B for 45              |
-| C    | 20    |                        |
-| D    | 15    |                        |
-| E    | 40    | 2E get one B free      |
-| F    | 10    | 2F get one F free      |
-| G    | 20    |                        |
-| H    | 10    | 5H for 45, 10H for 80  |
-| I    | 35    |                        |
-| J    | 60    |                        |
-| K    | 80    | 2K for 150             |
-| L    | 90    |                        |
-| M    | 15    |                        |
-| N    | 40    | 3N get one M free      |
-| O    | 10    |                        |
-| P    | 50    | 5P for 200             |
-| Q    | 30    | 3Q for 80              |
-| R    | 50    | 3R get one Q free      |
-| S    | 30    |                        |
-| T    | 20    |                        |
-| U    | 40    | 3U get one U free      |
-| V    | 50    | 2V for 90, 3V for 130  |
-| W    | 20    |                        |
-| X    | 90    |                        |
-| Y    | 10    |                        |
-| Z    | 50    |                        |
-+------+-------+------------------------+
++------+-------+---------------------------------+
+| A    | 50    | 3A for 130, 5A for 200          |
+| B    | 30    | 2B for 45                       |
+| C    | 20    |                                 |
+| D    | 15    |                                 |
+| E    | 40    | 2E get one B free               |
+| F    | 10    | 2F get one F free               |
+| G    | 20    |                                 |
+| H    | 10    | 5H for 45, 10H for 80           |
+| I    | 35    |                                 |
+| J    | 60    |                                 |
+| K    | 70    | 2K for 120                      |
+| L    | 90    |                                 |
+| M    | 15    |                                 |
+| N    | 40    | 3N get one M free               |
+| O    | 10    |                                 |
+| P    | 50    | 5P for 200                      |
+| Q    | 30    | 3Q for 80                       |
+| R    | 50    | 3R get one Q free               |
+| S    | 20    | buy any 3 of (S,T,X,Y,Z) for 45 |
+| T    | 20    | buy any 3 of (S,T,X,Y,Z) for 45 |
+| U    | 40    | 3U get one U free               |
+| V    | 50    | 2V for 90, 3V for 130           |
+| W    | 20    |                                 |
+| X    | 17    | buy any 3 of (S,T,X,Y,Z) for 45 |
+| Y    | 20    | buy any 3 of (S,T,X,Y,Z) for 45 |
+| Z    | 21    | buy any 3 of (S,T,X,Y,Z) for 45 |
++------+-------+---------------------------------+
 """
 
 
@@ -51,14 +52,24 @@ class Freebie:
 
 
 @dataclass
+class GroupBuy:
+    qnt_required: int
+    skus_accepted: List[str]
+    price: int
+
+
+@dataclass
 class Discount:
     qnt_required: int
     price: int
 
 
-def load_catalog(catalog: str) -> Tuple[Dict[str, int], Dict[str, List[Freebie]], Dict[str, List[Discount]]]:
+def load_catalog(
+        catalog: str
+) -> Tuple[Dict[str, int], Dict[str, List[Freebie]], Dict[str, List[GroupBuy]], Dict[str, List[Discount]]]:
     price_list = {}
     freebies = {}
+    groupbuys = {}
     discounts = {}
 
     for line in catalog.splitlines():
@@ -74,9 +85,13 @@ def load_catalog(catalog: str) -> Tuple[Dict[str, int], Dict[str, List[Freebie]]
         if price <= 0:
             raise ValueError(f"Incorrect price detected for {sku}:\n{line}")
         price_list[sku] = price
+
+        # Parse all eventual sku offers
         _parse_freebies(freebies, sku, tokens[OFFERS_IDX])
+        _parse_groupbuys(groupbuys, sku, tokens[OFFERS_IDX])
         _parse_discounts(discounts, sku, tokens[OFFERS_IDX])
-    return price_list, freebies, discounts
+
+    return price_list, freebies, groupbuys, discounts
 
 
 def _parse_freebies(
@@ -135,6 +150,32 @@ def _parse_discounts(
             discounts[sku].append(new_discount)
 
 
+def _parse_groupbuys(
+        groupbuys: Dict[str, List[GroupBuy]],
+        sku: str,
+        new_offers: str
+) -> None:
+    for m in RE_GROUPBUY.finditer(new_offers, 0, len(new_offers)):
+        # Parse group-buy offer
+        if sku not in groupbuys:
+            groupbuys[sku] = []
+        new_groupbuy = GroupBuy(
+            int(m.group('qnt_required')),
+            [item for item in m.group('skus_accepted')],
+            int(m.group('price'))
+        )
+
+        # Ensure new multi-buy offer is inserted by quantity required in descending order
+        inserted = False
+        for idx, groupbuy in enumerate(groupbuys[sku]):
+            if new_groupbuy.qnt_required > groupbuy.qnt_required:
+                groupbuys[sku].insert(idx, new_groupbuy)
+                inserted = True
+                break
+        if not inserted:
+            groupbuys[sku].append(new_groupbuy)
+
+
 def _freebies_to_quantity(qnt_offered: str) -> int:
     if qnt_offered == 'one':
         return 1
@@ -143,4 +184,5 @@ def _freebies_to_quantity(qnt_offered: str) -> int:
     return int(qnt_offered)  # Will raise on bad input
 
 
-PRICE_TABLE, FREEBIES, SPECIAL_OFFERS = load_catalog(CATALOG_SOURCE)
+PRICE_TABLE, FREEBIES, GROUPBUYS, SPECIAL_OFFERS = load_catalog(CATALOG_SOURCE)
+
