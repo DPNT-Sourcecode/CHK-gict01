@@ -15,7 +15,7 @@ def test_apply_freebie():
         'Y': 5,
         'Z': 3
     }
-    remainder_qnt = _apply_single_freebie(order, order['Y'], Freebie(2, 'Z', 2))
+    remainder_qnt = _apply_single_freebie(order, order['Y'], Freebie('Y', 2, 'Z', 2))
     assert order['Z'] == 0
     assert remainder_qnt == 1
 
@@ -25,7 +25,7 @@ class TestCheckout:
         assert checkout(['A', 'B']) == -1
 
     def test_detects_unknown_sku(self):
-        assert checkout('ABF') == -1
+        assert checkout('ABZ') == -1
 
     @pytest.mark.parametrize('order, expected', [
         ("ABCD", 115),
@@ -57,6 +57,7 @@ class TestCheckout:
     ])
     def test_applies_freebies_and_discounts(self, order, expected):
         assert checkout(order) == expected
+
 
 
 
