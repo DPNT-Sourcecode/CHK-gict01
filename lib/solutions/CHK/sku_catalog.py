@@ -155,6 +155,7 @@ def _parse_groupbuys(
         sku: str,
         new_offers: str
 ) -> None:
+    breakpoint()
     for m in RE_GROUPBUY.finditer(new_offers, 0, len(new_offers)):
         # Parse group-buy offer
         if sku not in groupbuys:
@@ -185,4 +186,5 @@ def _freebies_to_quantity(qnt_offered: str) -> int:
 
 
 PRICE_TABLE, FREEBIES, GROUPBUYS, SPECIAL_OFFERS = load_catalog(CATALOG_SOURCE)
+
 
