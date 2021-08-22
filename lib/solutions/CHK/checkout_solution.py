@@ -73,7 +73,9 @@ def _apply_freebies(order: Dict[str, int]) -> Dict[str, int]:
             continue
         for details in freebies:
             if details.qnt_required <= qnt_available and details.sku_offered in order:
-                parsed_order[details.sku_offered] = max(0, parsed_order[details.sku_offered] - details.qnt_offered)
+                sets = qnt_available // details.qnt_required
+                qnt_available %= details.qnt_required
+                parsed_order[details.sku_offered] = max(0, parsed_order[details.sku_offered] - sets*details.qnt_offered)
     return parsed_order
 
 
@@ -90,9 +92,10 @@ def _compute_total_with_discounts(order: Dict[str, int]) -> int:
 
 
 def _apply_discount(subtotal: int, qnt: int, discount: Discount) -> Tuple[int, int]:
-    if qnt <= discount.qnt_required:
+    if discount.qnt_required <= qnt:
         sets = qnt // discount.qnt_required
         subtotal += sets * discount.price
         qnt %= discount.qnt_required
     return subtotal, qnt
+
 
