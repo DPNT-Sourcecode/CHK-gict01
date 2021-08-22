@@ -40,4 +40,3 @@ class TestCheckout:
     ])
     def test_detects_freebies(self, order, expected):
         assert checkout(order) == expected
-
