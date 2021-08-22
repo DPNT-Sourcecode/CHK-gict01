@@ -84,15 +84,50 @@ def _parse_offers(
         sku: str,
         new_offers: str
 ) -> None:
-    idx = 0
     endpos = len(new_offers)
+
+    # Process freebies
+    idx = 0
     while idx < endpos:
         m = RE_FREEBIE.search(new_offers, idx, endpos)
         if m is None:
             break
         idx += m.span()
         if sku != m.group('sku_required'):
-            raise ValueError("Freebie offer ")
-        freebies[sku].append(Freebie())
+            raise ValueError(f"Freebie offer for {m.group('sku_required')} specified in wrong SKU entry {sku}")
+        if sku not in freebies:
+            freebies[sku] = []
+        freebies[sku].append(Freebie(
+            m.group('sku_required'),
+            int(m.group('qnt_required')),
+            m.group('sku_offered'),
+            _freebies_to_quantity(m.group('qnt_offered'))
+        ))
+
+    # Process multi-buy discounts
+    idx = 0
+    while idx < endpos:
+        m = RE_DISCOUNT.search(new_offers, idx, endpos)
+        if m is None:
+            break
+        idx += m.span()
+        if sku != m.group('sku_required'):
+            raise ValueError(f"Multi-buy offer for {m.group('sku_required')} specified in wrong SKU entry {sku}")
+        if sku not in discounts:
+            discounts[sku] = []
+        discounts[sku].append(Discount(
+            int(m.group('qnt_required')),
+            int(m.group('price'))
+        ))
+
+
+def _freebies_to_quantity(qnt_offered: str) -> int:
+    if qnt_offered == 'one':
+        return 1
+    if qnt_offered == 'two':
+        return 2
+    return int(qnt_offered)  # Will raise on bad input
+
 
 PRICE_TABLE, FREEBIES, SPECIAL_OFFERS = load_catalog(CATALOG_SOURCE)
+
