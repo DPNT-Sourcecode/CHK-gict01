@@ -109,6 +109,3 @@ def _apply_discount(subtotal: int, qnt: int, discount: Discount) -> Tuple[int, i
         subtotal += sets * discount.price
         qnt %= discount.qnt_required
     return subtotal, qnt
-
-
-

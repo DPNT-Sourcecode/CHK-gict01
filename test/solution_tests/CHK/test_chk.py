@@ -57,7 +57,3 @@ class TestCheckout:
     ])
     def test_applies_freebies_and_discounts(self, order, expected):
         assert checkout(order) == expected
-
-
-
-
